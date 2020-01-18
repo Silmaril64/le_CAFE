@@ -9,15 +9,17 @@ public class ComportementEmmi : MonoBehaviour
 
     // On pourra utiliser le produit scalaire de la normale et de la gravité, que l'on soustrait à la normale !
     const float gravity = 10.0f;
-    const float maxSpeed = 20.0f; // The player max speed, if the player go over this limit (+epsilon), he starts rolling
+    const float maxSpeed = 80.0f; // The player max speed, if the player go over this limit (+epsilon), he starts rolling
     const float epsilonSpeed = 2.0f;
     const float maxRollingSpeed = 40.0f; // The real max speed thanks to physics
     const float mass = 50.0f;
-    const Vector2 jumpForce = new Vector2(0, 10.0f);
+    const float jumpSpeed = 6400.0f;
+    Vector2 jumpForce = new Vector2(0, jumpSpeed);
     const float momentumDecrease = 1.0f;
+    LayerMask layer_mask;
 
     // Variables
-    float epsilon = Mathf.Pow(10, -3);
+    float epsilon = Mathf.Pow(10, -2);
     float hor;
     float savedMomentum;
     int etat; // Etats: 
@@ -32,37 +34,64 @@ public class ComportementEmmi : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        layer_mask = ~LayerMask.GetMask("Player");
+        Emmi.layer = 8;//LayerMask.GetMask("Player");
         body = Emmi.GetComponent<Rigidbody2D>();
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
         body.mass = mass;
+        body.gravityScale = 10f;
         etat = 0;
     }
 
-    void addVelocity(float hor)
+    void addVelocity(float hor, float ver)
     {
-        body.velocity += new Vector2(hor * epsilonSpeed, 0);
+        body.velocity += new Vector2(2*hor, ver);
     }
+
+
 
     int IsWall() //0: rien, 1: gauche, 2: droite
     {
+        if (ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask) <= epsilon)
+        {
+            return 1;
+        }
+        if (ClosestEnv.ClosestRightObstacle(Emmi, layer_mask) <= epsilon)
+        {
+            return 2;
+        }
         //raycast en haut et en bas du perso
         return 0;
     }
 
     bool IsGrounded()
     {
-        //raycast des deux cotés de la base
-        return 1 == 0;
+
+        
+        Vector2 center = body.GetComponent<CircleCollider2D>().bounds.center;
+        float diameter = body.GetComponent<CircleCollider2D>().bounds.size.x;
+        
+        RaycastHit2D hitleft = Physics2D.Raycast(center + new Vector2(-diameter/2 + epsilon, 0), Vector2.down, Mathf.Infinity, layer_mask);
+        RaycastHit2D hitright = Physics2D.Raycast(center + new Vector2(diameter / 2 - epsilon, 0), Vector2.down, Mathf.Infinity, layer_mask);
+        return Mathf.Min(hitleft.distance, hitright.distance) <= (diameter / 2 + epsilon);
+        /*if (Physics2D.OverlapCircle(center, diameter / 2 + epsilon, layer_mask) != null && (ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask) >= epsilon || ClosestEnv.ClosestRightObstacle(Emmi, layer_mask) >= epsilon))
+        {
+
+            return true;
+        }
+        return false;*/
     }
 
     void FixedUpdate()
     {
         // Partie contrôles
-        hor = Input.GetAxis("Horizontal");
-        if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.abs(body.velocity.x) < maxSpeed ))
+        hor = Input.GetAxisRaw("Horizontal");
+        if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.Abs(body.velocity.x) < maxSpeed ))
         {
-            addVelocity(hor);
+            addVelocity(hor, 0);
         }
+
+        Debug.Log(etat);
         switch (etat)
         {
             case 0:
@@ -77,6 +106,10 @@ public class ComportementEmmi : MonoBehaviour
                 }
                 break;
             case 1:
+                if (Mathf.Abs(hor) <= epsilon)
+                {
+                    body.velocity = new Vector2(body.velocity.x * 3/4, body.velocity.y);
+                }
                 if (body.velocity.magnitude <= epsilon && Mathf.Abs(hor) <= epsilon)
                 {
                     etat = 0;
@@ -103,11 +136,14 @@ public class ComportementEmmi : MonoBehaviour
                 }
                 break;
             case 3:
-                
+                if (Mathf.Abs(hor) <= epsilon)
+                {
+                    body.velocity = new Vector2(body.velocity.x * 9 / 10, body.velocity.y);
+                }
                 if (IsWall() != 0)
                 {
                     etat = 4;
-                    savedMomentum = body.velocity.magnitude;
+                    savedMomentum = body.velocity.magnitude * body.mass;
                 }
                 if (IsGrounded())
                 {
@@ -119,11 +155,11 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     savedMomentum -= momentumDecrease;
                 }
-                if (ClosestEnv.ClosestDownObstacle(body, 0) < epsilon) // on est tombé au sol
+                if (IsGrounded()) // on est tombé au sol
                 {
                     etat = 0;
                 }
-                else if (ClosestEnv.ClosestLeftObstacle(body, 0) < epsilon) // on a le mur à gauche
+                else if (ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask) < epsilon) // on a le mur à gauche
                 {
                     if (hor > epsilon)
                     {
@@ -132,11 +168,12 @@ public class ComportementEmmi : MonoBehaviour
                     if (Input.GetAxisRaw("Jump") > epsilon)
                     {
                         etat = 3;
-                        float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
-                        addVelocity(tempo,tempo);
+                        Vector2 tempo = new Vector2(Mathf.Max(jumpSpeed, savedMomentum)/2, Mathf.Max(jumpSpeed, savedMomentum) / 2);
+
+                        body.AddForce(tempo, ForceMode2D.Impulse);
                     }
                 }
-                else if (ClosestEnv.ClosestRightObstacle(body, 0) < epsilon) // on a le mur à droite
+                else if (ClosestEnv.ClosestRightObstacle(Emmi, layer_mask) < epsilon) // on a le mur à droite
                 {
                     if ( hor < -epsilon)
                     {
@@ -145,8 +182,10 @@ public class ComportementEmmi : MonoBehaviour
                     if (Input.GetAxisRaw("Jump") > epsilon)
                     {
                         etat = 3;
-                        float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
-                        addVelocity(-tempo,tempo);
+
+                        Vector2 tempo = new Vector2(-Mathf.Max(jumpSpeed, savedMomentum) / 2, Mathf.Max(jumpSpeed, savedMomentum) / 2);
+
+                        body.AddForce(tempo, ForceMode2D.Impulse);
                     }
                 }
                 else // on a plus de mur
