@@ -66,35 +66,38 @@ public class ComportementEmmi : MonoBehaviour
         switch (etat)
         {
             case 0:
-                if (Vector3.Magnitude(body.velocity) <= epsilon)
+                if (body.velocity.magnitude <= epsilon)
                 {
                     etat = 1;
                 } 
-                if (TODO: jump){
+                if (Input.GetAxis("Jump") == 1)
+                {
                     etat = 3;
                     AddForce(0, jumpSpeed);
                 }
                 break;
             case 1:
-                if (Vector3.Magnitude(body.velocity) <= epsilon && Mathf.Abs(hor) <= epsilon)
+                if (body.velocity.magnitude <= epsilon && Mathf.Abs(hor) <= epsilon)
                 {
                     etat = 0;
                 }
-                if (Vector3.Magnitude(body.velocity) > maxSpeed + epsilonSpeed)
+                if (body.velocity.magnitude > maxSpeed + epsilonSpeed)
                 {
                     etat = 2;
                 }
-                if (TODO: jump){
+                if (Input.GetAxis("Jump") == 1)
+                {
                     etat = 3;
                     AddForce(0, jumpSpeed);
                 }
                 break;
             case 2:
-                if (Vector3.Magnitude(body.velocity) <= epsilon && Mathf.Abs(hor) <= epsilon)
+                if (body.velocity.magnitude <= epsilon && Mathf.Abs(hor) <= epsilon)
                 {
                     etat = 0;
                 }
-                if (TODO: jump){
+                if (Input.GetAxis("Jump") == 1)
+                {
                     etat = 3;
                     AddForce(0, jumpSpeed);
                 }
@@ -104,7 +107,7 @@ public class ComportementEmmi : MonoBehaviour
                 if (IsWall() != 0)
                 {
                     etat = 4;
-                    savedMomentum = Vector3.Magnitude(body.velocity);
+                    savedMomentum = body.velocity.magnitude;
                 }
                 if (IsGrounded())
                 {
@@ -116,7 +119,7 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     savedMomentum -= momentumDecrease;
                 }
-                if (ClosestEnv.ClosestRightObstacle() < epsilon) // on est tombé au sol
+                if (ClosestEnv.ClosestDownObstacle() < epsilon) // on est tombé au sol
                 {
                     etat = 0;
                 }
@@ -126,12 +129,24 @@ public class ComportementEmmi : MonoBehaviour
                     {
                         etat = 3;
                     }
+                    if (Input.GetAxis("Jump") == 1)
+                    {
+                        etat = 3;
+                        float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
+                        AddForce(tempo,tempo);
+                    }
                 }
                 else if (ClosestEnv.ClosestRightObstacle() < epsilon) // on a le mur à droite
                 {
                     if ( hor < -epsilon)
                     {
                         etat = 3;
+                    }
+                    if (Input.GetAxis("Jump") == 1)
+                    {
+                        etat = 3;
+                        float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
+                        AddForce(tempo,tempo);
                     }
                 }
                 else // on a plus de mur
