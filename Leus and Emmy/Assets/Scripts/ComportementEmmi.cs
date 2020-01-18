@@ -13,7 +13,7 @@ public class ComportementEmmi : MonoBehaviour
     const float epsilonSpeed = 2.0f;
     const float maxRollingSpeed = 40.0f; // The real max speed thanks to physics
     const float mass = 50.0f;
-    const float jumpSpeed = 10.0f;
+    const Vector2 jumpForce = new Vector2(0, 10.0f);
     const float momentumDecrease = 1.0f;
 
     // Variables
@@ -38,9 +38,9 @@ public class ComportementEmmi : MonoBehaviour
         etat = 0;
     }
 
-    void AddForce(float hor, float ver)
+    void addVelocity(float hor)
     {
-
+        body.velocity += new Vector2(hor * epsilonSpeed, 0);
     }
 
     int IsWall() //0: rien, 1: gauche, 2: droite
@@ -59,21 +59,21 @@ public class ComportementEmmi : MonoBehaviour
     {
         // Partie contrôles
         hor = Input.GetAxis("Horizontal");
-        if (Mathf.Abs(hor) > epsilon)
+        if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.abs(body.velocity.x) < maxSpeed ))
         {
-            AddForce(hor, 0);
+            addVelocity(hor);
         }
         switch (etat)
         {
             case 0:
-                if (body.velocity.magnitude <= epsilon)
+                if (body.velocity.magnitude > epsilon)
                 {
                     etat = 1;
                 } 
-                if (Input.GetAxis("Jump") > epsilon)
+                if (Input.GetAxisRaw("Jump") > epsilon)
                 {
                     etat = 3;
-                    AddForce(0, jumpSpeed);
+                    body.AddForce(jumpForce, ForceMode2D.Impulse);
                 }
                 break;
             case 1:
@@ -85,10 +85,10 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     etat = 2;
                 }
-                if (Input.GetAxis("Jump") > epsilon)
+                if (Input.GetAxisRaw("Jump") > epsilon)
                 {
                     etat = 3;
-                    AddForce(0, jumpSpeed);
+                    body.AddForce(jumpForce, ForceMode2D.Impulse);
                 }
                 break;
             case 2:
@@ -96,10 +96,10 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     etat = 0;
                 }
-                if (Input.GetAxis("Jump") > epsilon)
+                if (Input.GetAxisRaw("Jump") > epsilon)
                 {
                     etat = 3;
-                    AddForce(0, jumpSpeed);
+                    body.AddForce(jumpForce, ForceMode2D.Impulse);
                 }
                 break;
             case 3:
@@ -119,34 +119,34 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     savedMomentum -= momentumDecrease;
                 }
-                if (ClosestEnv.ClosestDownObstacle() < epsilon) // on est tombé au sol
+                if (ClosestEnv.ClosestDownObstacle(body, 0) < epsilon) // on est tombé au sol
                 {
                     etat = 0;
                 }
-                else if (ClosestEnv.ClosestLeftObstacle() < epsilon) // on a le mur à gauche
+                else if (ClosestEnv.ClosestLeftObstacle(body, 0) < epsilon) // on a le mur à gauche
                 {
                     if (hor > epsilon)
                     {
                         etat = 3;
                     }
-                    if (Input.GetAxis("Jump") > epsilon)
+                    if (Input.GetAxisRaw("Jump") > epsilon)
                     {
                         etat = 3;
                         float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
-                        AddForce(tempo,tempo);
+                        addVelocity(tempo,tempo);
                     }
                 }
-                else if (ClosestEnv.ClosestRightObstacle() < epsilon) // on a le mur à droite
+                else if (ClosestEnv.ClosestRightObstacle(body, 0) < epsilon) // on a le mur à droite
                 {
                     if ( hor < -epsilon)
                     {
                         etat = 3;
                     }
-                    if (Input.GetAxis("Jump") > epsilon)
+                    if (Input.GetAxisRaw("Jump") > epsilon)
                     {
                         etat = 3;
                         float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
-                        AddForce(-tempo,tempo);
+                        addVelocity(-tempo,tempo);
                     }
                 }
                 else // on a plus de mur
