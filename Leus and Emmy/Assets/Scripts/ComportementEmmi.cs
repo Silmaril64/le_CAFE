@@ -70,7 +70,7 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     etat = 1;
                 } 
-                if (Input.GetAxis("Jump") == 1)
+                if (Input.GetAxis("Jump") > epsilon)
                 {
                     etat = 3;
                     AddForce(0, jumpSpeed);
@@ -85,7 +85,7 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     etat = 2;
                 }
-                if (Input.GetAxis("Jump") == 1)
+                if (Input.GetAxis("Jump") > epsilon)
                 {
                     etat = 3;
                     AddForce(0, jumpSpeed);
@@ -96,7 +96,7 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     etat = 0;
                 }
-                if (Input.GetAxis("Jump") == 1)
+                if (Input.GetAxis("Jump") > epsilon)
                 {
                     etat = 3;
                     AddForce(0, jumpSpeed);
@@ -129,7 +129,7 @@ public class ComportementEmmi : MonoBehaviour
                     {
                         etat = 3;
                     }
-                    if (Input.GetAxis("Jump") == 1)
+                    if (Input.GetAxis("Jump") > epsilon)
                     {
                         etat = 3;
                         float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
@@ -142,11 +142,11 @@ public class ComportementEmmi : MonoBehaviour
                     {
                         etat = 3;
                     }
-                    if (Input.GetAxis("Jump") == 1)
+                    if (Input.GetAxis("Jump") > epsilon)
                     {
                         etat = 3;
                         float tempo = Mathf.Max(jumpSpeed, savedMomentum)/2;
-                        AddForce(tempo,tempo);
+                        AddForce(-tempo,tempo);
                     }
                 }
                 else // on a plus de mur
