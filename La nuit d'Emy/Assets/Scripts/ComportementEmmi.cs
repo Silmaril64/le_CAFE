@@ -16,6 +16,7 @@ public class ComportementEmmi : MonoBehaviour
     float ray;
     float wallJumpTimer;
     bool isLocked;
+    float lockTime;
 
     float jumpSpeed;// = 300.0f;
     Vector2 jumpForce;// = new Vector2(0, jumpSpeed);
@@ -45,12 +46,13 @@ public class ComportementEmmi : MonoBehaviour
         ray = body.GetComponent<CircleCollider2D>().bounds.size.x;
         mass = 4 / 3 * Mathf.PI * Mathf.Pow(ray, 3);
         maxSpeed = ray*2;
-        jumpSpeed = 3f;
+        jumpSpeed = 4f;
         jumpForce = new Vector2(0, jumpSpeed);
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
         body.mass = mass;
-        body.gravityScale = 1f;
+        body.gravityScale = 2.5f;
         etat = 0;
+        lockTime = 0.5f;
     }
 
     void addVelocity(float hor, float ver)
@@ -95,16 +97,34 @@ public class ComportementEmmi : MonoBehaviour
     void FixedUpdate()
     {
         // Partie contrôles
-        hor = Input.GetAxisRaw("Horizontal");
-        if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.Abs(body.velocity.x) < maxSpeed ))
+        hor = Input.GetAxis("Horizontal");
+        if(isLocked)
         {
-            addVelocity(hor, 0);
+            wallJumpTimer += Time.fixedDeltaTime;
+            if (wallJumpTimer > lockTime)
+            {
+                isLocked = false;
+            }
+        }
+
+        else if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.Abs(body.velocity.x) < maxSpeed ))
+        {
+            if (etat == 3)
+            {
+                addVelocity(hor / 2, 0);
+            }
+            else
+            {
+                addVelocity(hor, 0);
+            }
         }
 
         Debug.Log(etat + "//R" + ClosestEnv.ClosestRightObstacle(Emmi, layer_mask) + "//L" + ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask));
         switch (etat)
         {
+///////////////////////////////////////////////////////////////////////////
             case 0:
+                isLocked = false;
                 if (IsWall() != 0)
                 {
                     etat = 4;
@@ -124,7 +144,11 @@ public class ComportementEmmi : MonoBehaviour
                     etat = 1;
                 }
                 break;
+///////////////////////////////////////////////////////////////////////////////
             case 1:
+
+                isLocked = false;
+
                 if (Mathf.Abs(hor) <= epsilon)
                 {
                     body.velocity = new Vector2(body.velocity.x * 3 / 4, body.velocity.y);
@@ -153,8 +177,11 @@ public class ComportementEmmi : MonoBehaviour
                     etat = 2;
                 }
                 break;
-
+/////////////////////////////////////////////////////////////////////////////////////////////
             case 2:
+
+                isLocked = false;
+
                 if (IsWall() != 0)
                 {
                     etat = 4;
@@ -174,8 +201,9 @@ public class ComportementEmmi : MonoBehaviour
                     etat = 0;
                 }
                 break;
-
+///////////////////////////////////////////////////////////////////////////////////////////////
             case 3:
+
                 /* 
                 //Frottement de l'air
                 
@@ -194,7 +222,13 @@ public class ComportementEmmi : MonoBehaviour
                     etat = 1;
                 }
                 break;
+/////////////////////////////////////////////////////////////////////////////////////////////
             case 4:
+
+                isLocked = false;
+
+                float wjs = Mathf.Max(jumpSpeed, savedMomentum);
+
                 if (savedMomentum > jumpSpeed)
                 {
                     savedMomentum -= momentumDecrease;
@@ -211,6 +245,7 @@ public class ComportementEmmi : MonoBehaviour
                 }
                 else if (ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask) < epsilon) // on a le mur à gauche
                 {
+                    
                     if (hor > epsilon)
                     {
                         etat = 3;
@@ -220,7 +255,7 @@ public class ComportementEmmi : MonoBehaviour
                         wallJumpTimer = 0;
                         isLocked = true;
                         etat = 3;
-                        Vector2 tempo = new Vector2(Mathf.Max(jumpSpeed, savedMomentum) / 2, Mathf.Max(jumpSpeed, savedMomentum));
+                        Vector2 tempo = new Vector2(wjs, wjs/2);
 
                         body.AddForce(tempo, ForceMode2D.Impulse);
                     }
@@ -237,7 +272,7 @@ public class ComportementEmmi : MonoBehaviour
                         isLocked = true;
                         etat = 3;
 
-                        Vector2 tempo = new Vector2(-Mathf.Max(jumpSpeed, savedMomentum) / 2, Mathf.Max(jumpSpeed, savedMomentum));
+                        Vector2 tempo = new Vector2(- wjs, wjs/2);
 
                         body.AddForce(tempo, ForceMode2D.Impulse);
                     }
