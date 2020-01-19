@@ -6,6 +6,7 @@ public class ComportementEmmi : MonoBehaviour
 {
     public GameObject Emmi;
     Rigidbody2D body;
+    Animator anim;
 
     // On pourra utiliser le produit scalaire de la normale et de la gravité, que l'on soustrait à la normale !
     float gravity = 2f;// = 10.0f;
@@ -18,7 +19,10 @@ public class ComportementEmmi : MonoBehaviour
     float wallJumpTimer;
     bool isLocked;
     float lockTime;
-
+    bool Moving_Right;
+    bool isSpawning;
+    float SpawningTime;
+    float SpawningTimer = 0f;
     float jumpSpeed;// = 300.0f;
     Vector2 jumpForce;// = new Vector2(0, jumpSpeed);
     const float momentumDecrease = 1.0f;
@@ -28,7 +32,7 @@ public class ComportementEmmi : MonoBehaviour
     float epsilon = Mathf.Pow(10, -2);
     float hor;
     float savedMomentum;
-    int etat; // Etats: 
+    public int etat; // Etats: 
     // - 0: au sol, idle
     // - 1: au sol, déplacement
     // - 2: au sol, roule
@@ -40,10 +44,12 @@ public class ComportementEmmi : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        isSpawning = true;
+        SpawningTime = 1.5f;
         layer_mask = ~LayerMask.GetMask("Player");
         Emmi.layer = 8;//LayerMask.GetMask("Player");
         body = Emmi.GetComponent<Rigidbody2D>();
-
+        Moving_Right = true;
         ray = body.GetComponent<CircleCollider2D>().bounds.size.x;
         mass = 4 / 3 * Mathf.PI * Mathf.Pow(ray, 3);
         maxSpeed = ray*2;
@@ -55,6 +61,7 @@ public class ComportementEmmi : MonoBehaviour
         gravFact = 2f;
         etat = 0;
         lockTime = 0.5f;
+        anim = GetComponent<Animator>();
     }
 
     void addVelocity(float hor, float ver)
@@ -112,7 +119,7 @@ public class ComportementEmmi : MonoBehaviour
             }
         }
 
-        else if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.Abs(body.velocity.x) < maxSpeed ))
+        else if (Mathf.Abs(hor) > epsilon && ( body.velocity.x * hor < 0 || Mathf.Abs(body.velocity.x) < maxSpeed )&& !isSpawning)
         {
             if (etat == 3)
             {
@@ -130,7 +137,16 @@ public class ComportementEmmi : MonoBehaviour
 ///////////////////////////////////////////////////////////////////////////
             case 0:
                 isLocked = false;
-                if (IsWall() != 0)
+                if (isSpawning)
+                {
+                    SpawningTimer += Time.fixedDeltaTime;
+                    if (SpawningTimer >= SpawningTime)
+                    {
+                        isSpawning = false;
+                    }
+
+                }
+                else if (IsWall() != 0)
                 {
                     etat = 4;
                     savedMomentum = body.velocity.magnitude * body.mass;
@@ -251,7 +267,7 @@ public class ComportementEmmi : MonoBehaviour
 
                 isLocked = false;
 
-                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))*jumpSpeed) / 1.5f;
+                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))*jumpSpeed) / 2.8f;
 
                 if (savedMomentum > jumpSpeed)
                 {
@@ -307,6 +323,13 @@ public class ComportementEmmi : MonoBehaviour
                 }
                 break;
 
+        }
+
+        anim.SetInteger("State", etat);
+        Moving_Right = body.velocity.x > 2* epsilon;
+        if (!Moving_Right && Emmi.transform.localScale.x > 0 || Moving_Right && Emmi.transform.localScale.x < 0)
+        {
+            Emmi.transform.localScale = new Vector3(-Emmi.transform.localScale.x, Emmi.transform.localScale.y, Emmi.transform.localScale.z);
         }
     }
 
