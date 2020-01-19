@@ -17,8 +17,9 @@ public class ComportementLava : MonoBehaviour
         
     }
 
-    private void OnTriggerEnter(Collider other)
+    void OnTriggerEnter2D(Collider2D other)
     {
+        Debug.Log("TRIGGERED");
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

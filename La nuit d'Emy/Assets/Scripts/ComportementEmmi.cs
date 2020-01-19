@@ -8,7 +8,8 @@ public class ComportementEmmi : MonoBehaviour
     Rigidbody2D body;
 
     // On pourra utiliser le produit scalaire de la normale et de la gravité, que l'on soustrait à la normale !
-    float gravity;// = 10.0f;
+    float gravity = 2f;// = 10.0f;
+    float gravFact;
     float maxSpeed;// = 40.0f; // The player max speed, if the player go over this limit (+epsilon), he starts rolling
     const float epsilonSpeed = 2.0f;
     const float maxRollingSpeed = 20.0f; // The real max speed thanks to physics
@@ -50,7 +51,8 @@ public class ComportementEmmi : MonoBehaviour
         jumpForce = new Vector2(0, jumpSpeed);
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
         body.mass = mass;
-        body.gravityScale = 2.5f;
+        body.gravityScale = gravity;
+        gravFact = 2f;
         etat = 0;
         lockTime = 0.5f;
     }
@@ -82,10 +84,13 @@ public class ComportementEmmi : MonoBehaviour
         
         Vector2 center = body.GetComponent<CircleCollider2D>().bounds.center;
         float diameter = body.GetComponent<CircleCollider2D>().bounds.size.x;
-        
+
+
+        RaycastHit2D hitbottom = Physics2D.Raycast(center + new Vector2(0, - diameter / 2), Vector2.down, Mathf.Infinity, layer_mask);
+
         RaycastHit2D hitleft = Physics2D.Raycast(center + new Vector2(-diameter/2 + epsilon, 0), Vector2.down, Mathf.Infinity, layer_mask);
         RaycastHit2D hitright = Physics2D.Raycast(center + new Vector2(diameter / 2 - epsilon, 0), Vector2.down, Mathf.Infinity, layer_mask);
-        return Mathf.Min(hitleft.distance, hitright.distance) <= (diameter / 2 + epsilon);
+        return (Mathf.Min(hitleft.distance, hitright.distance) <= (diameter / 2 + epsilon) || hitbottom.distance <= epsilon);
         /*if (Physics2D.OverlapCircle(center, diameter / 2 + epsilon, layer_mask) != null && (ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask) >= epsilon || ClosestEnv.ClosestRightObstacle(Emmi, layer_mask) >= epsilon))
         {
 
@@ -119,7 +124,7 @@ public class ComportementEmmi : MonoBehaviour
             }
         }
 
-        Debug.Log(etat + "//R" + ClosestEnv.ClosestRightObstacle(Emmi, layer_mask) + "//L" + ClosestEnv.ClosestLeftObstacle(Emmi, layer_mask));
+        
         switch (etat)
         {
 ///////////////////////////////////////////////////////////////////////////
@@ -148,7 +153,14 @@ public class ComportementEmmi : MonoBehaviour
             case 1:
 
                 isLocked = false;
-
+                if (body.velocity.y < 0)
+                {
+                    body.gravityScale = gravFact * gravity;
+                }
+                else
+                {
+                    body.gravityScale = gravity;
+                }
                 if (Mathf.Abs(hor) <= epsilon)
                 {
                     body.velocity = new Vector2(body.velocity.x * 3 / 4, body.velocity.y);
@@ -182,6 +194,15 @@ public class ComportementEmmi : MonoBehaviour
 
                 isLocked = false;
 
+                if (body.velocity.y < 0)
+                {
+                    body.gravityScale = gravFact * gravity;
+                }
+                else
+                {
+                    body.gravityScale = gravity;
+                }
+
                 if (IsWall() != 0)
                 {
                     etat = 4;
@@ -204,6 +225,7 @@ public class ComportementEmmi : MonoBehaviour
 ///////////////////////////////////////////////////////////////////////////////////////////////
             case 3:
 
+                body.gravityScale = gravity;
                 /* 
                 //Frottement de l'air
                 
@@ -225,9 +247,11 @@ public class ComportementEmmi : MonoBehaviour
 /////////////////////////////////////////////////////////////////////////////////////////////
             case 4:
 
+                body.gravityScale = gravity;
+
                 isLocked = false;
 
-                float wjs = Mathf.Max(jumpSpeed, savedMomentum);
+                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))*jumpSpeed) / 1.5f;
 
                 if (savedMomentum > jumpSpeed)
                 {
