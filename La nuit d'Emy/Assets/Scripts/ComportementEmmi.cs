@@ -267,7 +267,7 @@ public class ComportementEmmi : MonoBehaviour
 
                 isLocked = false;
 
-                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))*jumpSpeed) / 2.8f;
+                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))*jumpSpeed);
 
                 if (savedMomentum > jumpSpeed)
                 {
@@ -295,7 +295,7 @@ public class ComportementEmmi : MonoBehaviour
                         wallJumpTimer = 0;
                         isLocked = true;
                         etat = 3;
-                        Vector2 tempo = new Vector2(wjs, wjs/2);
+                        Vector2 tempo = new Vector2(wjs, wjs);
 
                         body.AddForce(tempo, ForceMode2D.Impulse);
                     }
@@ -312,7 +312,7 @@ public class ComportementEmmi : MonoBehaviour
                         isLocked = true;
                         etat = 3;
 
-                        Vector2 tempo = new Vector2(- wjs, wjs/2);
+                        Vector2 tempo = new Vector2(- wjs, wjs);
 
                         body.AddForce(tempo, ForceMode2D.Impulse);
                     }
