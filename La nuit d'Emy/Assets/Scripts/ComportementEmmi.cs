@@ -58,7 +58,7 @@ public class ComportementEmmi : MonoBehaviour
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
         body.mass = mass;
         body.gravityScale = gravity;
-        gravFact = 2f;
+        gravFact = 1f;
         etat = 0;
         lockTime = 0.5f;
         anim = GetComponent<Animator>();
@@ -173,10 +173,15 @@ public class ComportementEmmi : MonoBehaviour
                 {
                     body.gravityScale = gravFact * gravity;
                 }
+                else if (body.velocity.y > 0)
+                {
+                    body.gravityScale = gravity / 100; 
+                }
                 else
                 {
                     body.gravityScale = gravity;
                 }
+
                 if (Mathf.Abs(hor) <= epsilon)
                 {
                     body.velocity = new Vector2(body.velocity.x * 3 / 4, body.velocity.y);
@@ -213,6 +218,10 @@ public class ComportementEmmi : MonoBehaviour
                 if (body.velocity.y < 0)
                 {
                     body.gravityScale = gravFact * gravity;
+                }
+                else if (body.velocity.y > 0)
+                {
+                    body.gravityScale = gravity / 100;
                 }
                 else
                 {
@@ -267,7 +276,7 @@ public class ComportementEmmi : MonoBehaviour
 
                 isLocked = false;
 
-                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))*jumpSpeed);
+                float wjs = Mathf.Max(jumpSpeed*1.5f, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))/2*jumpSpeed)/2;
 
                 if (savedMomentum > jumpSpeed)
                 {
@@ -276,7 +285,7 @@ public class ComportementEmmi : MonoBehaviour
 
                 if (body.velocity.y < 0)
                 {
-                    body.velocity = new Vector2(body.velocity.x, body.velocity.y * 9 / 10);
+                    body.velocity = new Vector2(body.velocity.x, body.velocity.y);// * 9 / 10);
                 }
 
                 if (IsWall() == 0 && IsGrounded()) // on est tombé au sol
