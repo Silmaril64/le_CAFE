@@ -29,7 +29,7 @@ public class EmiScript : MonoBehaviour
     void Update()
     {
         m_chrono += Time.deltaTime;
-        if (m_chrono > 12 + t_Start1 + timeStart && !hasJumped)
+        if (m_chrono > 12.5f + t_Start1 + timeStart && !hasJumped)
         {
             body.AddForce(new Vector2(0,4f), ForceMode2D.Impulse);
             hasJumped = true;
