@@ -52,7 +52,7 @@ public class ComportementEmmi : MonoBehaviour
         Moving_Right = true;
         ray = body.GetComponent<CircleCollider2D>().bounds.size.x;
         mass = 4 / 3 * Mathf.PI * Mathf.Pow(ray, 3);
-        maxSpeed = ray*2;
+        maxSpeed = ray*2f;
         jumpSpeed = 4f;
         jumpForce = new Vector2(0, jumpSpeed);
         body.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -276,7 +276,7 @@ public class ComportementEmmi : MonoBehaviour
 
                 isLocked = false;
 
-                float wjs = Mathf.Max(jumpSpeed*1.5f, Mathf.Log(savedMomentum/jumpSpeed * Mathf.Exp(1))/2*jumpSpeed)/2;
+                float wjs = Mathf.Max(jumpSpeed, Mathf.Log(savedMomentum/(jumpSpeed*mass) * Mathf.Exp(1))/jumpSpeed);
 
                 if (savedMomentum > jumpSpeed)
                 {
