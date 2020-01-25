@@ -26,7 +26,7 @@ public class ComportementEmmi : MonoBehaviour
     float jumpSpeed;// = 300.0f;
     Vector2 jumpForce;// = new Vector2(0, jumpSpeed);
     const float momentumDecrease = 1.0f;
-    LayerMask layer_mask;
+    public LayerMask layer_mask;
 
     // Variables
     float epsilon = Mathf.Pow(10, -2);
@@ -46,7 +46,8 @@ public class ComportementEmmi : MonoBehaviour
     {
         isSpawning = true;
         SpawningTime = 1.5f;
-        layer_mask = ~LayerMask.GetMask("Player");
+        layer_mask = ~layer_mask;
+        //layer_mask = ~LayerMask.GetMask("Player");
         Emmi.layer = 8;//LayerMask.GetMask("Player");
         body = Emmi.GetComponent<Rigidbody2D>();
         Moving_Right = true;
@@ -109,6 +110,7 @@ public class ComportementEmmi : MonoBehaviour
     void FixedUpdate()
     {
         // Partie contrôles
+        Debug.Log(hor);
         hor = Input.GetAxis("Horizontal");
         if(isLocked)
         {
